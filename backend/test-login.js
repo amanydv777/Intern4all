@@ -5,7 +5,7 @@ const testLogin = async () => {
   try {
     console.log('Testing login endpoint...\n');
     
-    const response = await axios.post('http://localhost:5000/api/auth/login', {
+    const response = await axios.post('https://intern4all-backend.onrender.com/api/auth/login', {
       email: 'aman@example.com',
       password: 'password'
     });

@@ -5,7 +5,7 @@ Complete API reference for the Intern4All backend.
 ## Base URL
 
 ```
-http://localhost:5000/api
+https://intern4all-backend.onrender.com/api
 ```
 
 ## Authentication

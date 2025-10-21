@@ -79,7 +79,7 @@ A production-ready MERN stack backend for the Intern4All internship platform wit
    JWT_COOKIE_EXPIRE=7
    GOOGLE_CLIENT_ID=your_google_client_id
    GOOGLE_CLIENT_SECRET=your_google_client_secret
-   GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+   GOOGLE_CALLBACK_URL=https://intern4all-backend.onrender.com/api/auth/google/callback
    FRONTEND_URL=http://localhost:3000
    ```
 
@@ -104,7 +104,7 @@ A production-ready MERN stack backend for the Intern4All internship platform wit
    npm start
    ```
 
-The server will start on `http://localhost:5000`
+The server will start on `https://intern4all-backend.onrender.com`
 
 ## API Endpoints
 
@@ -240,7 +240,7 @@ Content-Type: application/json
 
 ### Health Check
 ```bash
-curl http://localhost:5000/api/health
+curl https://intern4all-backend.onrender.com/api/health
 ```
 
 ## Deployment

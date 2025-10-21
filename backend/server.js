@@ -49,8 +49,24 @@ app.use(helmet());
 app.use(mongoSanitize());
 
 // Enable CORS
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://intern4all-frontend.onrender.com',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list or matches Netlify pattern
+    if (allowedOrigins.includes(origin) || origin.includes('.netlify.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200,
 };

@@ -110,7 +110,7 @@ node seeder.js -i
 npm run dev
 ```
 
-The backend will start on `http://localhost:5000`
+The backend will start on `https://intern4all-backend.onrender.com`
 
 #### 3. Frontend Setup
 
@@ -124,7 +124,7 @@ cd ..
 npm install
 
 # The .env file should already exist with:
-# REACT_APP_API_URL=http://localhost:5000/api
+# REACT_APP_API_URL=https://intern4all-backend.onrender.com/api
 # REACT_APP_GEMINI_API_KEY=your_gemini_api_key
 
 # Start the frontend development server
@@ -197,7 +197,7 @@ JWT_EXPIRE=7d
 JWT_COOKIE_EXPIRE=7
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+GOOGLE_CALLBACK_URL=https://intern4all-backend.onrender.com/api/auth/google/callback
 FRONTEND_URL=http://localhost:3000
 GEMINI_API_KEY=your_gemini_api_key
 ```
@@ -205,7 +205,7 @@ GEMINI_API_KEY=your_gemini_api_key
 ### Frontend (.env)
 
 ```env
-REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_API_URL=https://intern4all-backend.onrender.com/api
 REACT_APP_GEMINI_API_KEY=your_gemini_api_key
 ```
 
@@ -229,7 +229,7 @@ After seeding the database, you can login with these credentials:
 
 ### Base URL
 ```
-http://localhost:5000/api
+https://intern4all-backend.onrender.com/api
 ```
 
 ### Authentication Endpoints
@@ -290,10 +290,10 @@ npm test
 ### Test API Endpoints
 ```bash
 # Health check
-curl http://localhost:5000/api/health
+curl https://intern4all-backend.onrender.com/api/health
 
 # Register user
-curl -X POST http://localhost:5000/api/auth/register \
+curl -X POST https://intern4all-backend.onrender.com/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"name":"Test User","email":"test@example.com","password":"password123"}'
 ```
