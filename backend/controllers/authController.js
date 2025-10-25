@@ -6,7 +6,7 @@ const crypto = require('crypto');
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, securityKey } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -14,6 +14,14 @@ exports.register = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'User already exists with this email',
+      });
+    }
+
+    // Validate security key
+    if (!securityKey || securityKey.length < 4) {
+      return res.status(400).json({
+        success: false,
+        message: 'Security key must be at least 4 characters',
       });
     }
 
@@ -27,6 +35,7 @@ exports.register = async (req, res, next) => {
       email,
       password,
       role: userRole,
+      securityKey,
       authProvider: 'local',
     });
 
@@ -204,19 +213,36 @@ const sendTokenResponse = (user, statusCode, res, isOAuth = false) => {
   });
 };
 
-// @desc    Forgot password
+// @desc    Forgot password - Verify security key
 // @route   POST /api/auth/forgotpassword
 // @access  Public
 exports.forgotPassword = async (req, res, next) => {
   try {
-    const { email } = req.body;
+    const { email, securityKey } = req.body;
 
-    const user = await User.findOne({ email });
+    if (!email || !securityKey) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email and security key',
+      });
+    }
+
+    const user = await User.findOne({ email }).select('+securityKey');
 
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'No user found with that email',
+      });
+    }
+
+    // Verify security key
+    const isSecurityKeyMatch = await user.matchSecurityKey(securityKey);
+
+    if (!isSecurityKeyMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid security key',
       });
     }
 
@@ -241,7 +267,7 @@ exports.forgotPassword = async (req, res, next) => {
     // For now, we'll just return the reset URL
     res.status(200).json({
       success: true,
-      message: 'Password reset link generated',
+      message: 'Security key verified. Password reset token generated.',
       resetUrl, // In production, don't send this - send via email instead
       resetToken, // For testing purposes only
     });
@@ -249,7 +275,7 @@ exports.forgotPassword = async (req, res, next) => {
     console.error(error);
     res.status(500).json({
       success: false,
-      message: 'Email could not be sent',
+      message: 'Password reset failed',
     });
   }
 };

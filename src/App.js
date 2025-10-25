@@ -177,7 +177,7 @@ function App() {
       ) : authPage === 'signup' ? (
         <SignUpPage onSignUpSuccess={handleLoginSuccess} onBackToLogin={handleBackToLogin} />
       ) : authPage === 'forgot' ? (
-        <ForgotPasswordPage onBackToLogin={handleBackToLogin} />
+        <ForgotPasswordPage onBackToLogin={handleBackToLogin} onResetPassword={handleResetPassword} />
       ) : authPage === 'reset' ? (
         <ResetPasswordPage resetToken={resetToken} onSuccess={handleLoginSuccess} onBackToLogin={handleBackToLogin} />
       ) : (
@@ -361,6 +361,7 @@ const SignUpPage = ({ onSignUpSuccess, onBackToLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [securityKey, setSecurityKey] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -383,9 +384,16 @@ const SignUpPage = ({ onSignUpSuccess, onBackToLogin }) => {
       setIsLoading(false);
       return;
     }
+
+    // Validate security key
+    if (!securityKey || securityKey.length < 4) {
+      setError('Security key must be at least 4 characters');
+      setIsLoading(false);
+      return;
+    }
     
     try {
-      const response = await authService.register({ name, email, password, role });
+      const response = await authService.register({ name, email, password, role, securityKey });
       onSignUpSuccess(response.user);
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
@@ -477,6 +485,19 @@ const SignUpPage = ({ onSignUpSuccess, onBackToLogin }) => {
               disabled={isLoading} 
             />
           </div>
+          <div className="form-group">
+            <input 
+              type="text" 
+              placeholder="Security Key (min 4 characters - for password recovery)" 
+              value={securityKey} 
+              onChange={(e) => setSecurityKey(e.target.value)} 
+              required 
+              disabled={isLoading} 
+            />
+            <small style={{ display: 'block', marginTop: '0.5rem', color: 'var(--text-medium)', fontSize: '0.75rem' }}>
+              Remember this key - you'll need it to reset your password
+            </small>
+          </div>
           {error && <p className="login-error-message">{error}</p>}
           <button type="submit" className="signin-btn" disabled={isLoading}>
             {isLoading ? 'Creating Account...' : 'Sign Up'}
@@ -491,8 +512,9 @@ const SignUpPage = ({ onSignUpSuccess, onBackToLogin }) => {
 };
 
 // --- Forgot Password Page Component ---
-const ForgotPasswordPage = ({ onBackToLogin }) => {
+const ForgotPasswordPage = ({ onBackToLogin, onResetPassword }) => {
   const [email, setEmail] = useState('');
+  const [securityKey, setSecurityKey] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -503,11 +525,18 @@ const ForgotPasswordPage = ({ onBackToLogin }) => {
     setError('');
     setSuccess('');
 
+    if (!securityKey) {
+      setError('Please enter your security key');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const response = await authService.forgotPassword(email);
-      setSuccess('Password reset instructions have been sent to your email. Check the console for the reset link (development only).');
-      console.log('Reset URL:', response.resetUrl);
-      console.log('Reset Token:', response.resetToken);
+      const response = await authService.forgotPassword(email, securityKey);
+      setSuccess('Security key verified! Redirecting to reset password...');
+      setTimeout(() => {
+        onResetPassword(response.resetToken);
+      }, 1500);
     } catch (err) {
       setError(err.message || 'Failed to send reset email');
       setIsLoading(false);
@@ -530,6 +559,19 @@ const ForgotPasswordPage = ({ onBackToLogin }) => {
               required 
               disabled={isLoading} 
             />
+          </div>
+          <div className="form-group">
+            <input 
+              type="text" 
+              placeholder="Security Key" 
+              value={securityKey} 
+              onChange={(e) => setSecurityKey(e.target.value)} 
+              required 
+              disabled={isLoading} 
+            />
+            <small style={{ display: 'block', marginTop: '0.5rem', color: 'var(--text-medium)', fontSize: '0.75rem' }}>
+              Enter the security key you provided during registration
+            </small>
           </div>
           {error && <p className="login-error-message">{error}</p>}
           {success && <p className="login-success-message">{success}</p>}
@@ -1342,14 +1384,29 @@ const InternshipDetailPage = ({ internshipId, user, onBack }) => {
     if (internshipId) fetchInternship();
   }, [internshipId]);
 
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [coverLetter, setCoverLetter] = useState('');
+  const [applicationError, setApplicationError] = useState('');
+
   const handleApply = async () => {
+    if (!coverLetter.trim()) {
+      setApplicationError('Please write a cover letter');
+      return;
+    }
+
     setApplying(true);
+    setApplicationError('');
     try {
-      await applicationService.createApplication(internshipId);
+      await applicationService.createApplication({
+        internshipId: internshipId,
+        coverLetter: coverLetter,
+        answers: []
+      });
       alert('Application submitted successfully!');
+      setShowApplicationModal(false);
       onBack();
     } catch (err) {
-      alert(err.message || 'Failed to submit application');
+      setApplicationError(err.message || 'Failed to submit application');
       setApplying(false);
     }
   };
@@ -1413,13 +1470,65 @@ const InternshipDetailPage = ({ internshipId, user, onBack }) => {
         {!isRecruiter && !isOwnPosting && (
           <button 
             className="primary-button apply-button" 
-            onClick={handleApply}
+            onClick={() => setShowApplicationModal(true)}
             disabled={applying}
           >
-            {applying ? 'Applying...' : 'Apply Now'}
+            Apply Now
           </button>
         )}
       </div>
+
+      {/* Application Modal */}
+      {showApplicationModal && (
+        <div className="ai-modal-overlay" onClick={() => setShowApplicationModal(false)}>
+          <div className="ai-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <div className="ai-modal-header">
+              <div className="title">
+                <span className="title-icon"><LuFilePlus /></span> Apply for {internship.title}
+              </div>
+              <button className="close-btn" onClick={() => setShowApplicationModal(false)}>
+                <LuX />
+              </button>
+            </div>
+            <div style={{ padding: '1.5rem' }}>
+              <div className="form-group full-width">
+                <label className="form-label">Cover Letter *</label>
+                <textarea
+                  className="form-input"
+                  rows="8"
+                  placeholder="Explain why you're interested in this internship and what makes you a good fit..."
+                  value={coverLetter}
+                  onChange={(e) => setCoverLetter(e.target.value)}
+                  disabled={applying}
+                  style={{ resize: 'vertical', minHeight: '150px' }}
+                />
+                <small style={{ display: 'block', marginTop: '0.5rem', color: 'var(--text-medium)', fontSize: '0.75rem' }}>
+                  Maximum 1000 characters
+                </small>
+              </div>
+              {applicationError && (
+                <p className="error-message" style={{ marginTop: '1rem' }}>{applicationError}</p>
+              )}
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
+                <button 
+                  className="back-button" 
+                  onClick={() => setShowApplicationModal(false)}
+                  disabled={applying}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="primary-button" 
+                  onClick={handleApply}
+                  disabled={applying || !coverLetter.trim()}
+                >
+                  {applying ? 'Submitting...' : 'Submit Application'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

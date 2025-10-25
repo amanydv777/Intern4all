@@ -2,6 +2,10 @@ const dotenv = require('dotenv');
 // Load env vars
 dotenv.config();
 
+// Validate environment variables
+const validateEnv = require('./config/validateEnv');
+validateEnv();
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');

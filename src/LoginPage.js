@@ -1,52 +1,26 @@
 import React, { useState } from 'react';
 import './LoginPage.css'; // Import the CSS for this page
+import * as authService from './services/authService';
 
-const LoginPage = ({ onLoginSuccess, onSignUpClick }) => {
+const LoginPage = ({ onLoginSuccess, onSignUpClick, onForgotPasswordClick }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // --- Handles regular email/password login (SIMULATED) ---
+  // --- Handles regular email/password login ---
   const handleRegularLogin = async (e) => {
     e.preventDefault(); // Prevent default form submission
     setIsLoading(true);
     setError('');
 
-    // --- START: SIMULATED BACKEND INTERACTION (NOT SECURE FOR PRODUCTION) ---
-    // In a real application, you would send a request to your backend login API:
-    /*
     try {
-      const response = await fetch('YOUR_BACKEND_LOGIN_ENDPOINT', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await response.json(); // Assuming backend returns { token, user: { name } }
-      if (response.ok) {
-        // Store the token and user info (e.g., in localStorage or a more secure state management)
-        localStorage.setItem('userToken', data.token);
-        localStorage.setItem('userName', data.user.name);
-        onLoginSuccess(data.user.name); // Call the success handler with user's name
-      } else {
-        setError(data.message || 'Login failed. Please check your credentials.');
-      }
+      const response = await authService.login({ email, password });
+      onLoginSuccess(response.user);
     } catch (err) {
-      setError('Network error or server unavailable. Please try again later.');
+      setError(err.message || 'Login failed. Please check your credentials.');
+      setIsLoading(false);
     }
-    */
-
-    // --- SIMULATED SUCCESS FOR DEMO (DO NOT USE IN PRODUCTION) ---
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
-    if (email === 'test@example.com' && password === 'password123') {
-      const userName = "AMAN YADAV"; // Placeholder name, would come from backend
-      onLoginSuccess(userName); // Call the success handler with a placeholder name
-    } else {
-      setError('Invalid email or password. (Hint: test@example.com / password123)');
-    }
-    // --- END: SIMULATED BACKEND INTERACTION ---
-
-    setIsLoading(false);
   };
 
   // --- Handles Google Login (SIMULATED) ---
@@ -54,18 +28,9 @@ const LoginPage = ({ onLoginSuccess, onSignUpClick }) => {
     setError('');
     setIsLoading(true);
 
-    // --- START: SIMULATED GOOGLE LOGIN (NOT SECURE FOR PRODUCTION) ---
-    // In a real application, this would initiate a Google OAuth flow:
-    // 1. Redirect user to Google's authentication page.
-    // 2. Google authenticates the user and redirects back to your app with a token/code.
-    // 3. Your backend or frontend processes this to get user info.
-    // 4. onLoginSuccess(userNameFromGoogle);
-
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
-    const userName = "AMAN YADAV (Google)"; // Placeholder name, would come from Google profile
-    onLoginSuccess(userName); // Call the success handler with a placeholder name
-    // --- END: SIMULATED GOOGLE LOGIN ---
-
+    // Google OAuth flow would be implemented here
+    // For now, show a message
+    setError('Google login not yet configured. Please use email/password login.');
     setIsLoading(false);
   };
 
@@ -116,7 +81,7 @@ const LoginPage = ({ onLoginSuccess, onSignUpClick }) => {
         </form>
 
         <div className="login-links">
-          <a href="#" onClick={(e) => {e.preventDefault(); alert('Forgot password functionality not implemented');}} className="forgot-password-link">Forgot password?</a>
+          <a href="#" onClick={(e) => {e.preventDefault(); onForgotPasswordClick && onForgotPasswordClick();}} className="forgot-password-link">Forgot password?</a>
           <span> • </span>
           <a href="#" onClick={(e) => {e.preventDefault(); onSignUpClick();}} className="signup-link">Need an account? Sign up</a>
         </div>

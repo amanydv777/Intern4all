@@ -94,13 +94,13 @@ export const getStoredUser = () => {
   return userStr ? JSON.parse(userStr) : null;
 };
 
-// Forgot password
-export const forgotPassword = async (email) => {
+// Forgot password with security key
+export const forgotPassword = async (email, securityKey) => {
   try {
-    const response = await api.post('/auth/forgotpassword', { email });
+    const response = await api.post('/auth/forgotpassword', { email, securityKey });
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Failed to send reset email' };
+    throw error.response?.data || { message: 'Failed to verify security key' };
   }
 };
 

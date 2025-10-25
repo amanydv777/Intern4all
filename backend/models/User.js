@@ -96,6 +96,12 @@ const UserSchema = new mongoose.Schema(
         default: false,
       },
     },
+    securityKey: {
+      type: String,
+      required: [true, 'Please provide a security key'],
+      minlength: [4, 'Security key must be at least 4 characters'],
+      select: false,
+    },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },
@@ -104,16 +110,21 @@ const UserSchema = new mongoose.Schema(
   }
 );
 
-// Encrypt password before saving
+// Encrypt password and security key before saving
 UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    next();
-  }
-
-  if (this.password) {
+  // Hash password if modified
+  if (this.isModified('password') && this.password) {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
   }
+
+  // Hash security key if modified
+  if (this.isModified('securityKey') && this.securityKey) {
+    const salt = await bcrypt.genSalt(10);
+    this.securityKey = await bcrypt.hash(this.securityKey, salt);
+  }
+  
+  next();
 });
 
 // Sign JWT and return
@@ -126,6 +137,11 @@ UserSchema.methods.getSignedJwtToken = function () {
 // Match user entered password to hashed password in database
 UserSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Match user entered security key to hashed security key in database
+UserSchema.methods.matchSecurityKey = async function (enteredSecurityKey) {
+  return await bcrypt.compare(enteredSecurityKey, this.securityKey);
 };
 
 module.exports = mongoose.model('User', UserSchema);
